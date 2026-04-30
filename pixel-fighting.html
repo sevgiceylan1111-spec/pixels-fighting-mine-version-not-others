@@ -1,0 +1,67 @@
+<!-- SAVE THIS FILE AS index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pixel Fight: Infinity Edition</title>
+    <style>
+        body { background: #121212; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; overflow: hidden; }
+        #warningOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; text-align: center; padding: 20px; }
+        .warning-box { background: #1a1a1a; border: 4px solid #ff0000; padding: 40px; border-radius: 20px; max-width: 500px; box-shadow: 0 0 50px rgba(255,0,0,0.2); }
+        .warning-box h1 { color: #ff0000; margin-top: 0; font-size: 2em; text-transform: uppercase; }
+        .warning-box button { margin-top: 20px; padding: 15px 30px; background: #ff0000; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1.2em; }
+        canvas { background: #000; border: 3px solid #444; image-rendering: pixelated; width: 500px; height: 500px; cursor: crosshair; }
+        .ui { margin-top: 15px; text-align: center; background: #222; padding: 15px; border-radius: 8px; width: 550px; }
+        .row { margin-bottom: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        input[type=range] { width: 180px; }
+        .speed-val { color: #00ffcc; font-family: monospace; font-weight: bold; width: 45px; display: inline-block; }
+        button.game-btn { padding: 10px 15px; cursor: pointer; background: #444; color: white; border: none; border-radius: 4px; font-weight: bold; }
+        #recBtn { background: #a33; }
+        #recBtn.recording { background: #f33; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        .status { font-size: 0.8em; color: #888; }
+    </style>
+</head>
+<body>
+    <div id="warningOverlay">
+        <div class="warning-box">
+            <h1>READ THIS BEFORE CONTINUING!!!</h1>
+            <p>We can't do 20x to 100x slider speed because it's laggy and makes the device heat up.</p>
+            <p><strong>Speed is capped at 15x for safety and performance.</strong></p>
+            <button onclick="dismissWarning()">I UNDERSTAND & CONTINUE</button>
+        </div>
+    </div>
+    <canvas id="canvas" width="200" height="200"></canvas>
+    <div class="ui">
+        <div class="row">
+            Speed: <input type="range" id="speedSlider" min="0.1" max="15" step="0.1" value="1">
+            <span id="speedVal" class="speed-val">1.0x</span>
+            <button class="game-btn" onclick="resetSim()">Reset</button>
+        </div>
+        <div class="row">
+            <button id="recBtn" class="game-btn" onclick="toggleRecording()">Start Infinity Recording</button>
+            <span id="recStatus" class="status">Idle</span>
+        </div>
+    </div>
+<script>
+    const canvas = document.getElementById('canvas'), ctx = canvas.getContext('2d'), slider = document.getElementById('speedSlider'), speedVal = document.getElementById('speedVal'), recBtn = document.getElementById('recBtn'), recStatus = document.getElementById('recStatus'), warningOverlay = document.getElementById('warningOverlay');
+    const w = canvas.width, h = canvas.height;
+    let grid = new Int32Array(w * h), colorMap = { 0: [0, 0, 0] }, speed = 1.0, subStep = 0, gameRunning = false, mediaRecorder, recordedChunks = [], isRecording = false;
+    window.onload = () => { if (localStorage.getItem('warningAccepted') === 'true') { gameRunning = true; } else { warningOverlay.style.display = 'flex'; } };
+    function dismissWarning() { localStorage.setItem('warningAccepted', 'true'); warningOverlay.style.display = 'none'; gameRunning = true; }
+    function getRandColor() { return [Math.floor(Math.random()*255), Math.floor(Math.random()*255), Math.floor(Math.random()*255)]; }
+    function resetSim() { const teamA = 1, teamB = 2; colorMap[teamA] = getRandColor(); colorMap[teamB] = getRandColor(); for (let i = 0; i < grid.length; i++) { grid[i] = (i % w < w / 2) ? teamA : teamB; } }
+    slider.oninput = () => { speed = parseFloat(slider.value); speedVal.innerText = speed.toFixed(1) + "x"; };
+    canvas.onmousedown = (e) => { if (!gameRunning) return; e.preventDefault(); const teamId = Date.now() + Math.random(); colorMap[teamId] = getRandColor(); const rect = canvas.getBoundingClientRect(); const x = Math.floor((e.clientX - rect.left) / (rect.width / w)), y = Math.floor((e.clientY - rect.top) / (rect.height / h)); if (x >= 0 && x < w && y >= 0 && y < h) grid[y * w + x] = teamId; };
+    canvas.oncontextmenu = (e) => e.preventDefault();
+    function update() { if (!gameRunning) return; let nextGrid = new Int32Array(grid); for (let i = 0; i < grid.length; i++) { let team = grid[i], x = i % w, y = Math.floor(i / w); let nx = x + (Math.floor(Math.random() * 3) - 1), ny = y + (Math.floor(Math.random() * 3) - 1); if (nx >= 0 && nx < w && ny >= 0 && ny < h) { let targetIdx = ny * w + nx; if (grid[targetIdx] !== team && Math.random() < 0.4) nextGrid[targetIdx] = team; } } grid = nextGrid; }
+    const imgData = ctx.createImageData(w, h);
+    function draw() { for (let i = 0; i < grid.length; i++) { const p = i * 4, rgb = colorMap[grid[i]] || [0,0,0]; imgData.data[p] = rgb[0]; imgData.data[p+1] = rgb[1]; imgData.data[p+2] = rgb[2]; imgData.data[p+3] = 255; } ctx.putImageData(imgData, 0, 0); }
+    function loop() { if (gameRunning) { if (speed >= 1) { for (let i = 0; i < Math.floor(speed); i++) update(); } else { subStep += speed; if (subStep >= 1) { update(); subStep = 0; } } } draw(); requestAnimationFrame(loop); }
+    function toggleRecording() { if (!gameRunning) return; if (!isRecording) startRecording(); else stopRecording(); }
+    function startRecording() { recordedChunks = []; const stream = canvas.captureStream(30); let options = { mimeType: 'video/mp4' }; if (!MediaRecorder.isTypeSupported(options.mimeType)) options = { mimeType: 'video/webm;codecs=h264' }; mediaRecorder = new MediaRecorder(stream, options); mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); }; mediaRecorder.onstop = () => { const blob = new Blob(recordedChunks, { type: 'video/mp4' }); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.style.display = 'none'; a.href = url; a.download = 'pixel-fight-infinity.mp4'; document.body.appendChild(a); a.click(); setTimeout(() => { document.body.removeChild(a); window.URL.revokeObjectURL(url); }, 100); recStatus.innerText = "Downloaded!"; }; mediaRecorder.start(); isRecording = true; recBtn.innerText = "Stop & Save Infinity Clip"; recBtn.classList.add('recording'); recStatus.innerText = "Recording..."; }
+    function stopRecording() { if (mediaRecorder && isRecording) { mediaRecorder.stop(); isRecording = false; recBtn.innerText = "Start Infinity Recording"; recBtn.classList.remove('recording'); } }
+    resetSim(); loop();
+</script>
+</body>
+</html>
