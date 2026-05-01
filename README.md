@@ -1,14 +1,13 @@
-# Pixel Fight: Infinity Edition ⚔️
+# Pixel Fighting: Infinity Edition ⚔️
 
 A high-speed territorial simulation built with HTML5 Canvas.
 
-## 🔗 [Play the Game Here!](https://sevgiceylan1111-spec.github.io/YOUR-REPO-NAME/)
+## 🔗 [Click Here to Play!](https://sevgiceylan1111-spec.github.io/pixel-fighting/)
 
-### How it works:
-*   **Colors fight** for control of the screen.
-*   **Click** to drop new teams into the battle.
-*   **Warning System** built-in to protect your device.
-*   **Infinity Record** button to save long battle clips.
+### 🚀 Features:
+*   **Safety First**: Built-in warning system to protect your device.
+*   **High Performance**: Smooth pixel combat at up to 15x speed.
+*   **Infinity Clips**: Record your battles and download them as MP4s.
 
 ---
 *Created by sevgiceylan1111-spec*
