@@ -2,7 +2,7 @@
 
 A high-speed territorial simulation built with HTML5 Canvas.
 
-## 🔗 [Click Here to Play!](https://sevgiceylan1111-spec.github.io/pixel-fighting/)
+## 🔗 [Click Here to Play!](https://proper-moccasin-cezbc726zf.edgeone.app))
 
 ### 🚀 Features:
 *   **Safety First**: Built-in warning system to protect your device.
